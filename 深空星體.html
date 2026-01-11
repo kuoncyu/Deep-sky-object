@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>🌌 宇宙全書：完美終章 (Audio Enhanced)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f3ff;
+            --secondary: #9d00ff;
+            --glass: rgba(8, 14, 24, 0.95);
+            --border: rgba(0, 243, 255, 0.4);
+            --text: #e0e6ed;
+            --danger: #ff3366;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #000;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #050508 0%, #000 100%);
+            user-select: none;
+        }
+
+        /* 星空漂浮動畫 */
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: 
+                radial-gradient(1px 1px at 20px 20px, #fff, transparent),
+                radial-gradient(2px 2px at 100px 200px, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 300px 400px, rgba(255,255,255,0.3), transparent);
+            background-size: 600px 600px;
+            animation: drift 100s linear infinite;
+        }
+        @keyframes drift { from { background-position: 0 0; } to { background-position: 0 600px; } }
+
+        .container {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 0 80px rgba(0, 243, 255, 0.15);
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(12px);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0 0 10px 0; font-size: 2em;
+            background: linear-gradient(90deg, #fff, var(--primary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        }
+
+        /* 頂部工具列 */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; position: relative;
+        }
+
+        /* 🏠 放棄任務按鈕 */
+        .btn-abort {
+            background: rgba(255, 51, 102, 0.1); border: 1px solid rgba(255, 51, 102, 0.4);
+            color: #ff5577; padding: 5px 12px; border-radius: 20px; cursor: pointer;
+            font-size: 0.8em; font-weight: bold; transition: 0.3s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-abort:hover { background: rgba(255, 51, 102, 0.3); box-shadow: 0 0 10px rgba(255, 51, 102, 0.3); color: #fff; }
+
+        /* 🔊 音效狀態燈 */
+        .audio-wave {
+            color: var(--primary); font-size: 0.75em; letter-spacing: 1px;
+            border: 1px solid var(--primary); padding: 4px 10px;
+            border-radius: 20px; cursor: pointer; opacity: 0.6;
+            background: rgba(0,0,0,0.5);
+        }
+        .audio-wave.active { opacity: 1; box-shadow: 0 0 15px var(--primary); background: rgba(0, 243, 255, 0.1); }
+
+        /* 📊 HUD 計分板 */
+        .hud {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.06); padding: 12px 25px; border-radius: 12px;
+            margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .hud-item { display: flex; flex-direction: column; align-items: flex-start; }
+        .hud-item:last-child { align-items: flex-end; }
+        .hud-lbl { font-size: 0.7em; color: #888; letter-spacing: 2px; }
+        .hud-val { font-family: 'Orbitron', sans-serif; font-size: 1.5em; font-weight: bold; color: var(--primary); }
+
+        /* 圖片區 */
+        .viewport {
+            position: relative; width: 100%; height: 380px;
+            background: #000; border-radius: 16px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.15); margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .target-img {
+            max-width: 100%; max-height: 100%; 
+            width: auto; height: auto;
+            object-fit: contain; 
+            opacity: 0; transition: opacity 0.4s ease;
+        }
+        
+        .loader {
+            position: absolute; display: flex; flex-direction: column; align-items: center;
+            color: var(--primary); font-size: 0.9em; letter-spacing: 3px; font-family: 'Orbitron';
+        }
+        .scan-line {
+            width: 100%; height: 2px; background: var(--primary);
+            position: absolute; top: 0; animation: scan 1.5s infinite linear;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        /* 按鈕群 */
+        .btn {
+            border: none; padding: 16px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-weight: bold; font-size: 1em; transition: 0.2s;
+            width: 100%; position: relative; overflow: hidden;
+        }
+        .btn-main {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: #fff; font-size: 1.2em; box-shadow: 0 0 25px rgba(0, 243, 255, 0.25);
+        }
+        .btn-main:hover { transform: scale(1.02); box-shadow: 0 0 40px rgba(0, 243, 255, 0.5); }
+
+        .btn-report {
+            background: transparent; border: 1px dashed rgba(255,255,255,0.2); 
+            color: rgba(255,255,255,0.5); font-size: 0.85em; padding: 8px;
+            margin-bottom: 15px;
+        }
+        .btn-report:hover { border-color: #ff3366; color: #ff3366; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-opt {
+            background: rgba(255,255,255,0.05); color: var(--text); 
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 15px 5px; min-height: 65px;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            line-height: 1.3; font-size: 0.95em;
+        }
+        .btn-opt:hover:not(:disabled) {
+            background: rgba(0, 243, 255, 0.15); border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+        .btn-opt:disabled { opacity: 0.5; cursor: default; }
+
+        /* 回饋區 */
+        .feedback {
+            margin-top: 20px; padding: 15px; border-radius: 10px; text-align: left;
+            background: rgba(0, 243, 255, 0.1); border-left: 4px solid var(--primary);
+            display: none; animation: slideIn 0.3s;
+        }
+        .feedback.wrong { background: rgba(255, 0, 85, 0.1); border-left-color: #ff3366; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .slider-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin: 20px 0; }
+        input[type=range] { width: 100%; accent-color: var(--primary); margin-top: 10px; }
+
+    </style>
+</head>
+<body onclick="soundSys.unlock()">
+
+<div class="stars"></div>
+
+<div id="view-setup" class="container">
+    <h1>UNIVERSE <span style="font-size:0.5em; opacity:0.7;">FINAL</span></h1>
+    <p style="color:#aaa; letter-spacing:1px; margin-top:5px;">宇宙全書完美版 (Audio Enhanced)</p>
+
+    <div style="text-align:left; background:rgba(0,0,0,0.4); padding:20px; border-radius:10px; margin:25px 0; border:1px dashed rgba(255,255,255,0.2); line-height:1.7; font-size:0.9em;">
+        <strong>📡 系統就緒：</strong><br>
+        1. <strong>🎵 深空音頻引擎：</strong> 搭載 Generative Space Ambient，隨機生成不重複的宇宙背景音。<br>
+        2. <strong>🌌 沉浸體驗：</strong> 包含 Drone (低頻)、Pad (空靈長音) 與 Twinkle (星光)。<br>
+        3. <strong>🏠 自由進退：</strong> 隨時可返回基地。
+    </div>
+
+    <div class="slider-box">
+        <div style="display:flex; justify-content:space-between; align-items:end;">
+            <label>任務數量</label>
+            <span id="q-val" style="color:var(--primary); font-size:1.5em; font-family:'Orbitron';">20</span>
+        </div>
+        <input type="range" id="q-range" min="10" max="100" value="20" oninput="document.getElementById('q-val').innerText=this.value">
+    </div>
+
+    <button class="btn btn-main" onclick="game.start()">啟動任務 (START)</button>
+</div>
+
+<div id="view-game" class="container" style="display:none;">
+    <div class="top-bar">
+        <div class="btn-abort" onclick="game.abort()">
+            <span>🏠</span> ABORT MISSION
+        </div>
+        <div id="audio-tag" class="audio-wave" onclick="soundSys.unlock()">AUDIO OFF</div>
+    </div>
+
+    <div class="hud">
+        <div class="hud-item">
+            <span class="hud-lbl">TARGET</span>
+            <span class="hud-val"><span id="curr-q">1</span> / <span id="total-q">20</span></span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-lbl">SCORE</span>
+            <span class="hud-val" id="score">0</span>
+        </div>
+    </div>
+
+    <div class="viewport">
+        <div class="scan-line"></div>
+        <div class="loader" id="loader">
+            <div>宇宙訊號捕捉中</div>
+            <div style="font-size:0.6em; margin-top:5px; opacity:0.7;">ACQUIRING SIGNAL...</div>
+        </div>
+        <img id="main-img" class="target-image" alt="Deep Sky Object">
+    </div>
+
+    <button class="btn btn-report" onclick="game.reportError()">⚠️ 圖片無法顯示 (點此換題)</button>
+
+    <div id="options-box" class="options-grid"></div>
+
+    <div id="feedback" class="feedback">
+        <h3 id="fb-title" style="margin:0 0 5px 0;"></h3>
+        <p id="fb-desc" style="margin:0; font-size:0.95em; color:#ddd; line-height:1.5;"></p>
+        <button class="btn btn-main" style="margin-top:15px;" onclick="game.next()">CONTINUE ➜</button>
+    </div>
+</div>
+
+<div id="view-end" class="container" style="display:none;">
+    <h1 style="color:var(--primary);">MISSION COMPLETE</h1>
+    <div style="font-size:5em; font-weight:bold; color:var(--primary); font-family:'Orbitron'; margin:20px 0; text-shadow:0 0 40px var(--primary);">
+        <span id="final-score">0</span>
+    </div>
+    <p id="rank-text" style="font-size:1.2em; font-weight:bold; margin-bottom:30px;"></p>
+    <button class="btn btn-main" onclick="location.reload()">REBOOT SYSTEM</button>
+</div>
+
+<script>
+/**
+ * 🎵 Deep Space Generative Audio Engine (Ver 2.0)
+ * 包含：Deep Drone (低頻), Ethereal Pads (空靈和弦), Star Twinkles (星光音效)
+ */
+const soundSys = {
+    ctx: null,
+    masterGain: null,
+    oscillators: [], // 儲存 drone 的振盪器
+    intervals: [],   // 儲存自動演奏的計時器
+
+    // 🌌 宇宙音階 (A Minor Pentatonic + 擴充高音，營造空靈感)
+    scale: [110, 130.81, 164.81, 196.00, 220, 261.63, 329.63, 392.00, 523.25, 659.25],
+
+    // 初始化並啟動
+    startDrone: function() {
+        if (this.ctx) return; 
+        
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.3; // 主音量避免過大
+        this.masterGain.connect(this.ctx.destination);
+
+        // 1. 啟動底層低頻嗡鳴 (Drone)
+        this.createDroneOsc(55);    // A1 (基礎)
+        this.createDroneOsc(55.5);  // 微調 (產生 Binaural Beat 拍頻)
+        this.createDroneOsc(110, 0.05); // A2 (增加厚度)
+
+        // 2. 啟動生成式音樂 (隨機演奏)
+        this.startGenerativeMusic();
+        
+        // UI 更新
+        const tag = document.getElementById('audio-tag');
+        tag.innerText = "AUDIO ONLINE";
+        tag.classList.add('active');
+    },
+
+    // 建立持續的 Drone 音
+    createDroneOsc: function(freq, vol = 0.1) {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        
+        g.gain.value = vol;
+        
+        osc.connect(g);
+        g.connect(this.masterGain);
+        
+        osc.start();
+        this.oscillators.push({node: osc, gain: g});
+    },
+
+    // 🎹 啟動自動演奏
+    startGenerativeMusic: function() {
+        // 循環：每 4~7 秒演奏一個長音 (Pad)
+        const padLoop = () => {
+            if(!this.ctx) return;
+            this.playAmbientPad();
+            const nextTime = 4000 + Math.random() * 3000;
+            this.intervals.push(setTimeout(padLoop, nextTime));
+        };
+        padLoop();
+
+        // 循環：每 2~10 秒隨機出現星光音效 (Twinkle)
+        const starLoop = () => {
+            if(!this.ctx) return;
+            if(Math.random() > 0.6) this.playStarTwinkle();
+            const nextTime = 2000 + Math.random() * 8000;
+            this.intervals.push(setTimeout(starLoop, nextTime));
+        };
+        starLoop();
+    },
+
+    // 🎵 演奏一個漸入漸出的長音 (模擬合成器 Pad)
+    playAmbientPad: function() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        
+        // 隨機選一個音
+        const freq = this.scale[Math.floor(Math.random() * this.scale.length)];
+        
+        osc.type = 'triangle'; // 三角波比較溫潤
+        osc.frequency.value = freq;
+        
+        // 連接
+        osc.connect(g);
+        g.connect(this.masterGain);
+
+        // ADSR 包絡線 (極慢的 Attack 和 Release)
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.08, t + 2); // 2秒漸入
+        g.gain.linearRampToValueAtTime(0, t + 8);    // 6秒漸出
+
+        osc.start(t);
+        osc.stop(t + 8);
+    },
+
+    // ✨ 演奏清脆的星光音
+    playStarTwinkle: function() {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+
+        // 選高音
+        const freq = this.scale[Math.floor(Math.random() * this.scale.length)] * 4; 
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+        
+        osc.connect(g);
+        g.connect(this.masterGain);
+
+        // 快速的 Attack/Release
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.05, t + 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+
+        osc.start(t);
+        osc.stop(t + 1.5);
+    },
+
+    // 🛑 停止所有聲音
+    stopDrone: function() {
+        if (!this.ctx) return;
+        
+        // 清除所有計時器
+        this.intervals.forEach(id => clearTimeout(id));
+        this.intervals = [];
+
+        // 總音量淡出
+        this.masterGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1);
+        
+        setTimeout(() => {
+            this.oscillators.forEach(o => o.node.stop());
+            this.ctx.close();
+            this.ctx = null;
+            this.oscillators = [];
+        }, 1000);
+        
+        const tag = document.getElementById('audio-tag');
+        tag.innerText = "AUDIO OFF";
+        tag.classList.remove('active');
+    },
+
+    unlock: function() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    // 🎮 遊戲音效 (SFX)
+    playSFX: function(type) {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.connect(g);
+        g.connect(this.ctx.destination); // SFX 直接輸出，不受背景音樂音量影響太深
+
+        if (type === 'correct') {
+            // 高科技確認音
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, t); 
+            osc.frequency.exponentialRampToValueAtTime(1760, t + 0.1);
+            g.gain.setValueAtTime(0.3, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        } else if (type === 'wrong') {
+            // 錯誤警示
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, t);
+            osc.frequency.linearRampToValueAtTime(100, t + 0.3);
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.linearRampToValueAtTime(0.001, t + 0.3);
+        } else if (type === 'win') {
+            // 勝利和弦
+            this.playNote(523.25, t, 0.2); // C5
+            this.playNote(659.25, t+0.1, 0.2); // E5
+            this.playNote(783.99, t+0.2, 0.8); // G5
+            return;
+        }
+        osc.start(t);
+        osc.stop(t + 0.5);
+    },
+
+    playNote: function(freq, time, dur) {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.connect(g);
+        g.connect(this.ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.1, time);
+        g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+        osc.start(time);
+        osc.stop(time + dur);
+    }
+};
+
+/**
+ * 🌌 題庫 (M1-M110 完整中文名 + NGC)
+ */
+const DB_FULL = [];
+
+const M_NAMES = {
+    1:"蟹狀星雲",6:"蝴蝶星團",7:"托勒密星團",8:"礁湖星雲",11:"野鴨星團",13:"武仙座球狀星團",
+    16:"老鷹星雲",17:"奧米加星雲",20:"三裂星雲",22:"人馬座球狀星團",24:"人馬座恆星雲",
+    27:"啞鈴星雲",31:"仙女座星系",32:"橢圓星系",33:"三角座星系",40:"雙星",42:"獵戶座大星雲",
+    43:"德麥蘭星雲",44:"蜂巢星團",45:"昴宿星團",49:"橢圓星系",51:"渦狀星系",57:"環狀星雲",
+    58:"螺旋星系",59:"橢圓星系",60:"橢圓星系",61:"螺旋星系",63:"向日葵星系",64:"黑眼星系",
+    74:"幽靈星系",76:"小啞鈴星雲",78:"反射星雲",81:"波德星系",82:"雪茄星系",83:"南風車星系",
+    87:"室女A星系",97:"貓頭鷹星雲",101:"風車星系",102:"紡錘星系",104:"草帽星系"
+};
+
+for(let i=1; i<=110; i++) {
+    let n = M_NAMES[i] || (i<=110 && [2,3,4,5,9,10,12,14,15,19,28,30,53,54,55,56,62,68,69,70,71,72,75,79,80,92,107].includes(i) ? "球狀星團" : (i>=84&&i<=86||i>=88&&i<=91||i>=94&&i<=96||i>=98&&i<=100||i>=105&&i<=106||i>=108&&i<=110 ? "星系" : "疏散星團"));
+    
+    // 檔名規則
+    let f = `Messier_${i}_Hubble_WikiSky.jpg`;
+    if(i===1) f="Crab_Nebula.jpg";
+    if(i===8) f="M8_Lagoon_Nebula_by_R_Vandbei.jpg";
+    if(i===16) f="Eagle_Nebula_4.jpg";
+    if(i===20) f="Trifid_Nebula_by_Deddy_Dayag.jpg";
+    if(i===27) f="M27_-_Dumbbell_Nebula.jpg";
+    if(i===31) f="M31_09-01-2011_(5438874637).jpg";
+    if(i===42) f="Orion_Nebula_-_Hubble_2006_mosaic_18000.jpg";
+    if(i===45) f="Pleiades_large.jpg";
+    if(i===51) f="Messier51_sRGB.jpg";
+    if(i===57) f="M57_The_Ring_Nebula.jpg";
+    if(i===104) f="M104_ngc4594_sombrero_galaxy_hi-res.jpg";
+
+    DB_FULL.push({ label: `M${i} ${n}`, file: f, desc: `梅西耶 ${i} 號天體 (${n})` });
+}
+
+const NGCS = [
+    { l:"NGC 2237 玫瑰星雲", f:"The_Rosette_Nebula_Caldwell_49.jpg" },
+    { l:"NGC 7293 螺旋星雲", f:"Helix_Nebula_(NGC_7293).jpg" },
+    { l:"NGC 6543 貓眼星雲", f:"NGC_6543.jpg" },
+    { l:"NGC 6960 網狀星雲", f:"Veil_Nebula_Supernova_Remnant.jpg" },
+    { l:"IC 434 馬頭星雲", f:"Barnard_33.jpg" },
+    { l:"NGC 7000 北美洲星雲", f:"NGC7000_North_America_Nebula.jpg" },
+    { l:"NGC 253 玉夫座星系", f:"Sculptor_Galaxy_visible_VISTA.jpg" },
+    { l:"NGC 5139 半人馬座Ω", f:"Omega_Centauri_by_ESO_VLT.jpg" },
+    { l:"NGC 6302 蝴蝶星雲", f:"NGC_6302_Hubble_2009.full.jpg" },
+    { l:"NGC 602 小麥哲倫星團", f:"Hubble_Space_Telescope_image_of_NGC_602.jpg" }
+];
+NGCS.forEach(n => DB_FULL.push({ label: n.l, file: n.f, desc: n.l }));
+
+const game = {
+    pool: [],
+    idx: 0,
+    score: 0,
+    targetCount: 0,
+    answeredCount: 0,
+    failSafe: 0,
+
+    start: function() {
+        this.targetCount = parseInt(document.getElementById('q-range').value);
+        this.answeredCount = 0;
+        this.score = 0;
+        
+        soundSys.startDrone(); // 啟動深空音效
+        this.shufflePool();
+        
+        document.getElementById('view-setup').style.display = 'none';
+        document.getElementById('view-game').style.display = 'block';
+        document.getElementById('view-end').style.display = 'none';
+        document.getElementById('total-q').innerText = this.targetCount;
+        
+        this.loadQ();
+    },
+
+    // 🏠 放棄任務
+    abort: function() {
+        if(confirm("確定要放棄目前任務並返回基地嗎？")) {
+            soundSys.stopDrone();
+            document.getElementById('view-game').style.display = 'none';
+            document.getElementById('view-setup').style.display = 'block';
+        }
+    },
+
+    shufflePool: function() {
+        let arr = [...DB_FULL];
+        for(let i=arr.length-1; i>0; i--) {
+            const j = Math.floor(Math.random()*(i+1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        this.pool = arr;
+        this.idx = 0;
+    },
+
+    loadQ: function() {
+        if (this.answeredCount >= this.targetCount) return this.end();
+        if (this.idx >= this.pool.length) this.idx = 0;
+
+        const item = this.pool[this.idx];
+        
+        document.getElementById('curr-q').innerText = this.answeredCount + 1;
+        document.getElementById('score').innerText = this.score;
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('options-box').innerHTML = '';
+        
+        const img = document.getElementById('main-img');
+        const loader = document.getElementById('loader');
+        
+        img.style.opacity = 0;
+        loader.style.display = 'flex';
+        
+        // Proxy 載入
+        img.src = `https://images.weserv.nl/?url=commons.wikimedia.org/wiki/Special:FilePath/${item.file}&w=800&output=jpg`;
+        
+        img.onload = () => {
+            loader.style.display = 'none';
+            img.style.opacity = 1;
+            this.failSafe = 0;
+        };
+        
+        // 🔇 靜默跳過，不彈窗
+        img.onerror = () => {
+            console.log("Skip bad img:", item.label);
+            this.failSafe++;
+            if (this.failSafe > 20) return; 
+            this.idx++;
+            this.loadQ();
+        };
+        
+        this.genOpts(item);
+    },
+
+    reportError: function() {
+        this.idx++;
+        this.loadQ();
+    },
+
+    genOpts: function(correct) {
+        const box = document.getElementById('options-box');
+        box.innerHTML = '';
+        
+        let opts = [correct];
+        while(opts.length < 4) {
+            const r = DB_FULL[Math.floor(Math.random() * DB_FULL.length)];
+            if(!opts.find(x => x.label === r.label)) opts.push(r);
+        }
+        opts.sort(() => 0.5 - Math.random());
+
+        opts.forEach(o => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-opt';
+            btn.innerText = o.label;
+            btn.onclick = () => this.check(btn, o.label);
+            box.appendChild(btn);
+        });
+    },
+
+    check: function(btn, ans) {
+        const correct = this.pool[this.idx];
+        const isRight = (ans === correct.label);
+        
+        document.querySelectorAll('.btn-opt').forEach(b => {
+            b.disabled = true;
+            if(b.innerText === correct.label) {
+                b.style.background = 'rgba(0, 243, 255, 0.2)';
+                b.style.borderColor = 'var(--primary)';
+            } else if(b === btn && !isRight) {
+                b.style.background = 'rgba(255, 0, 85, 0.2)';
+                b.style.borderColor = 'var(--danger)'; 
+            }
+        });
+
+        const fb = document.getElementById('feedback');
+        fb.style.display = 'block';
+        if(isRight) {
+            this.score += 100;
+            soundSys.playSFX('correct');
+            document.getElementById('score').innerText = this.score;
+            fb.className = 'feedback';
+            document.getElementById('fb-title').innerText = "✅ 辨識成功";
+            document.getElementById('fb-title').style.color = "var(--primary)";
+        } else {
+            soundSys.playSFX('wrong');
+            fb.className = 'feedback wrong';
+            document.getElementById('fb-title').innerText = "⚠️ 辨識錯誤";
+            document.getElementById('fb-title').style.color = "#ff3366"; 
+        }
+        document.getElementById('fb-desc').innerText = correct.desc;
+    },
+
+    next: function() {
+        this.idx++;
+        this.answeredCount++;
+        this.loadQ();
+    },
+
+    end: function() {
+        soundSys.playSFX('win');
+        soundSys.stopDrone(); // 結束時停止背景音
+        document.getElementById('view-game').style.display = 'none';
+        document.getElementById('view-end').style.display = 'block';
+        document.getElementById('final-score').innerText = this.score;
+        
+        const rank = document.getElementById('rank-text');
+        const max = this.targetCount * 100;
+        if (this.score >= max * 0.9) rank.innerText = "稱號：傳奇觀測員";
+        else if (this.score >= max * 0.6) rank.innerText = "稱號：資深天文官";
+        else rank.innerText = "稱號：實習學員";
+    }
+};
+</script>
+</body>
+</html>
